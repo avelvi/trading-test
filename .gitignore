@@ -1,0 +1,27 @@
+### Common ###
+.DS_Store
+target/
+.history
+.cache
+logs/
+/build/
+
+### Intellij ###
+.idea
+.idea/
+*.iml
+/out/
+
+### Gradle ###
+.gradle
+.gradle/
+
+### Eclipse ###
+.metadata
+bin/
+tmp/
+.settings/
+.project
+
+### Java ###
+*.class

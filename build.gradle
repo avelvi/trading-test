@@ -1,0 +1,19 @@
+group 'aleksey.ivlev'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'idea'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'Trading Test',
+                'Main-Class': 'aleksey.ivlev.Main'
+    }
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+}
