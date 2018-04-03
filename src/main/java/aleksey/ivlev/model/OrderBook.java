@@ -11,8 +11,8 @@ public class OrderBook {
     private static OrderBook instance;
 
     private OrderBook() {
-        this.buyData = new TreeMap<>(Comparator.comparing(OrderKey::getPrice));
-        this.sellData = new TreeMap<>(Comparator.comparing(OrderKey::getPrice));
+        this.buyData = new TreeMap<>(Comparator.comparing(OrderKey::getPrice).reversed());
+        this.sellData = new TreeMap<>(Comparator.comparing(OrderKey::getPrice).reversed());
         this.orders = new HashMap<>();
 
     }

@@ -21,8 +21,6 @@ public class CommandExecutorServiceImpl implements CommandExecutorService {
     @Override
     public void placeOrder(Order originalOrder) {
         Optional<Order> remaining = placeInnerOrder(originalOrder);
-//        System.out.println(orderBookStorage.getOrderBook().getBuyData());
-//        System.out.println(orderBookStorage.getOrderBook().getSellData());
         remaining.ifPresent(this::placeRemaining);
     }
 
@@ -37,48 +35,35 @@ public class CommandExecutorServiceImpl implements CommandExecutorService {
         Integer orderSize = order.getSize();
         OrderKey orderKey = new OrderKey(order.getPrice(), searchInBuy ? OrderType.B.name() : OrderType.S.name());
         NavigableMap<OrderKey, LinkedList<Order>> data = getDataStorageByFlag(searchInBuy);
+        NavigableMap<OrderKey, LinkedList<Order>> availableOrders =
+                searchInBuy ? data.headMap(orderKey, true) : data.tailMap(orderKey, true);
 
-        while (true) {
-            Optional<Map.Entry<OrderKey, LinkedList<Order>>> result;
-            if (searchInBuy) {
-                result = Optional.ofNullable(data.ceilingEntry(orderKey));
-            } else {
-                result = Optional.ofNullable(data.floorEntry(orderKey));
-            }
-
-            if (result.isPresent()) {
-                Map.Entry<OrderKey, LinkedList<Order>> entry = result.get();
-                ListIterator<Order> it = entry.getValue().listIterator();
-                while (it.hasNext()) {
-                    Order ord = it.next();
+        Iterator<Map.Entry<OrderKey, LinkedList<Order>>> entryIterator = availableOrders.entrySet().iterator();
+        while (entryIterator.hasNext()) {
+            Map.Entry<OrderKey, LinkedList<Order>> entry = entryIterator.next();
+            ListIterator<Order> orderListIterator = entry.getValue().listIterator();
+            while (orderListIterator.hasNext()) {
+                    Order ord = orderListIterator.next();
                     if (ord.getSize() <= orderSize) {
                         orders.remove(ord.getId());
-                        it.remove();
+                        orderListIterator.remove();
                         orderSize -= ord.getSize();
                     } else {
                         ord.setSize(ord.getSize() - orderSize);
-                        it.set(ord);
+                        orderListIterator.set(ord);
                         orderSize = 0;
                     }
 
                     if (orderSize == 0) {
                         break;
                     }
-                }
-                if (entry.getValue().isEmpty()) {
-                    data.remove(entry.getKey());
-                    if (orderSize == 0) {
-                        break;
-                    }
-                }
-            } else {
-                break;
             }
-
-            if (orderSize == 0) {
-                break;
+            if (entry.getValue().isEmpty()) {
+                entryIterator.remove();
+                if (orderSize == 0) {
+                    break;
+                }
             }
-
         }
 
         if (orderSize > 0) {
@@ -118,9 +103,9 @@ public class CommandExecutorServiceImpl implements CommandExecutorService {
         Map.Entry<OrderKey, LinkedList<Order>> entry;
         NavigableMap<OrderKey, LinkedList<Order>> data = getDataStorageByOrderType(orderType);
         if (orderType.equals(OrderType.B)) {
-            entry = data.lastEntry();
-        } else {
             entry = data.firstEntry();
+        } else {
+            entry = data.lastEntry();
         }
 
         if (nonNull(entry)) {
